@@ -1,53 +1,42 @@
-#include <iostream>
+#include <SFML/Graphics.hpp>
 #include <windows.h>
+#include <iostream>
+#include <vector>
 #include <string>
-#include <direct.h>
-#include <cstring>
-// Librerías para detección de Hardware y GPU
 #include <dxgi.h> 
+#include <direct.h>
 
 #pragma comment(lib, "dxgi.lib")
 
 using namespace std;
 
-// ------------------------------
-// UTILIDADES DE CONSOLA
-// ------------------------------
-void setColor(int color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-}
+struct AppIcon {
+    sf::RectangleShape box;
+    sf::Text label;
+    string id;
 
-void gotoxy(int x, int y) {
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
+    AppIcon(string name, float x, sf::Font& font) {
+        id = name;
+        box.setSize(sf::Vector2f(70, 70));
+        box.setPosition(x, 620);
+        box.setFillColor(sf::Color::Transparent);
+        box.setOutlineThickness(2);
+        box.setOutlineColor(sf::Color::White);
 
-void clearLine(int y) {
-    gotoxy(0, y);
-    for (int i = 0; i < 120; i++) cout << " ";
-}
+        label.setFont(font);
+        label.setString(name);
+        label.setCharacterSize(12);
+        label.setPosition(x, 700);
+    }
+};
 
-// ------------------------------
-// DETECCIÓN DE HARDWARE (JUJUTSU SCAN)
-// ------------------------------
-void detectarHardware() {
-    // 1. Info de Sistema y RAM
-    SYSTEM_INFO sysInfo;
+string obtenerAnalisisHardware() {
+    SYSTEM_INFO sysInfo; 
     GetSystemInfo(&sysInfo);
-
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    MEMORYSTATUSEX memInfo; 
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX); 
     GlobalMemoryStatusEx(&memInfo);
-
-    // 2. Espacio en Disco (C:)
-    ULARGE_INTEGER freeBytes, totalBytes, totalFreeBytes;
-    GetDiskFreeSpaceExA("C:\\", &freeBytes, &totalBytes, &totalFreeBytes);
-    double gbTotal = static_cast<double>(totalBytes.QuadPart) / (1024 * 1024 * 1024);
-    double gbFree = static_cast<double>(totalFreeBytes.QuadPart) / (1024 * 1024 * 1024);
-
-    // 3. Identificar GPU
+    
     wstring gpuName = L"No detectada";
     IDXGIFactory* pFactory;
     if (SUCCEEDED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory))) {
@@ -60,164 +49,133 @@ void detectarHardware() {
         }
         pFactory->Release();
     }
+    string finalGpu(gpuName.begin(), gpuName.end());
 
-    // Renderizado de Info
-    int startY = 22;
-    setColor(11); // Cyan
-    gotoxy(70, startY);     cout << "--- ANALISIS DE RECIPIENTE ---";
-    
-    setColor(15); // Blanco
-    gotoxy(70, startY + 1); cout << "Nucleos de Energia: " << sysInfo.dwNumberOfProcessors;
-    gotoxy(70, startY + 2); cout << "Memoria RAM: " << (memInfo.ullTotalPhys / (1024 * 1024 * 1024)) << " GB";
-    gotoxy(70, startY + 3); cout << "Disco (C:): " << (int)gbFree << "GB libres / " << (int)gbTotal << "GB";
-    
-    setColor(14); // Dorado
-    gotoxy(70, startY + 5); 
-    wcout << L"Dominio Grafico: " << gpuName;
-    
-    setColor(12);
-    gotoxy(70, startY + 7); cout << "[SISTEMA LISTO PARA EL COMBATE]";
-    Sleep(2500);
-}
-
-// ------------------------------
-// PANTALLA DE INICIO
-// ------------------------------
-void pantallaInicio() {
-    system("mode con: cols=120 lines=45");
-
-    setColor(12);
-    gotoxy(48, 2);
-    cout << "=== JUJUTSU OS ===";
-
-    setColor(9);
-    int startX = 20;
-    int startY = 4;
-
-    string logo[] = {
-        "                                 ¦¦                                 ",
-        "                                 ¦¦                                 ",
-        "                                 ¦¦¦¦                               ",
-        "                                 ¦¦¦¦                               ",
-        "                               ¦¦¦¦¦¦                               ",
-        "                               ¦¦¦¦¦¦                               ",
-        "                         ¦¦  ¦¦¦¦¦¦¦¦    ¦¦                         ",
-        "                         ¦¦¦¦¦¦¦¦¦¦¦¦  ¦¦¦¦                         ",
-        "                       ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦  ¦¦                       ",
-        "                       ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦  ¦¦                       ",
-        "                       ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦  ¦¦                   ",
-        "                       ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦                   ",
-        "                       ¦¦¦¦¦¦++¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦                   ",
-        "                       ¦¦¦¦¦¦++++¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦                   ",
-        "                   ¦¦  ¦¦¦¦¦¦+++++¦¦¦¦¦¦¦¦¦¦¦¦¦                   ",
-        "                    ¦¦¦¦¦¦¦¦+++++++¦¦¦¦¦¦¦¦¦¦¦                   ",
-        "                    ¦¦¦¦¦¦¦¦¦¦++++++¦¦¦¦¦¦¦¦¦                   ",
-        "                      ¦¦¦¦¦¦¦¦++++++++¦¦¦¦¦¦                   ",
-        "                          ¦¦¦¦¦¦++++++¦¦                           ",
-        "                              ++++++++                             "
-    };
-
-    for (int i = 0; i < 20; i++) {
-        gotoxy(startX, startY + i);
-        cout << logo[i];
-    }
-
-    Sleep(1000);
-    setColor(12);
-    gotoxy(70, 12); cout << "Bienvenido, hechicero.";
-
-    int initY = 15;
-    gotoxy(70, initY);     cout << "Sincronizando energia maldita...";   Sleep(500);
-    gotoxy(70, initY + 1); cout << "Desplegando barrera...";           Sleep(500);
-    gotoxy(70, initY + 2); cout << "Accediendo al sistema Jujutsu...";  Sleep(500);
-    gotoxy(70, 19);        cout << "Inicializacion completa.";
-    
-    detectarHardware();
-}
-
-// ------------------------------
-// INTERFAZ DE COMANDOS
-// ------------------------------
-void prompt(int y) {
-    char dir[256];
-    _getcwd(dir, 256);
-    setColor(13);
-    clearLine(y);
-    gotoxy(2, y);
-    cout << dir << " >> ";
-    gotoxy(2 + strlen(dir) + 4, y);
+    return "--- ANALISIS DE RECIPIENTE ---\n" +
+           string("Nucleos de Energia: ") + to_string(sysInfo.dwNumberOfProcessors) + "\n" +
+           "Memoria RAM: " + to_string(memInfo.ullTotalPhys / (1024 * 1024 * 1024)) + " GB\n" +
+           "Dominio Grafico: " + finalGpu + "\n" +
+           "[SISTEMA LISTO PARA EL COMBATE]";
 }
 
 int main() {
-    pantallaInicio();
+    sf::RenderWindow window(sf::VideoMode(1100, 750), "S.O. Lolito.exe");
+    sf::Font font;
+    if (!font.loadFromFile("C:\\Windows\\Fonts\\consola.ttf")) font.loadFromFile("C:\\Windows\\Fonts\\arial.ttf");
 
-    int currentY = 32;
-    string comando;
+    bool enBoot = true;
+    sf::Clock bootClock;
+    string bufferCLI = "";
+    string inputUsuario = "";
+    string logAccion = "";
 
-    while (true) {
-        prompt(currentY);
-        cin >> comando;
+    sf::Text txtLogo("=== JUJUTSU OS ===\n\n      ¦¦\n      ¦¦¦¦\n    ¦¦¦¦¦¦\n  ¦¦¦¦¦¦¦¦¦¦\n¦¦¦¦¦++++¦¦¦¦\n  ¦¦¦++++¦¦\n    ++++", font, 18);
+    txtLogo.setPosition(450, 80); 
+    txtLogo.setFillColor(sf::Color::Red);
 
-        setColor(13);
-        clearLine(currentY + 1);
-        gotoxy(2, currentY + 1);
+    sf::RectangleShape desktop(sf::Vector2f(900, 580));
+    desktop.setPosition(100, 40);
+    desktop.setFillColor(sf::Color(25, 25, 30));
+    desktop.setOutlineThickness(4);
+    desktop.setOutlineColor(sf::Color(120, 120, 120));
 
-        if (comando == "Gege" || comando == "Gojo") {
-            string nombre;
-            cout << "Nombre de expansion: ";
-            cin >> nombre;
-            system(("mkdir " + nombre).c_str());
-            cout << "  Dominio creado: " << nombre;
-        }
-        else if (comando == "Kenjaku" || comando == "kjk") {
-            string ruta;
-            cout << "Ruta de transmigracion: ";
-            cin >> ruta;
-            if (ruta == "..") {
-                if (_chdir("..") == 0) cout << "  Regresando al origen.";
-                else cout << "  Error al retroceder.";
-            } else {
-                if (_chdir(ruta.c_str()) == 0) cout << "  Cuerpo cambiado (Directorio ok).";
-                else cout << "  Error: Territorio no encontrado.";
+    sf::RectangleShape cliBox(sf::Vector2f(650, 400));
+    cliBox.setPosition(225, 120);
+    cliBox.setFillColor(sf::Color::Black);
+    cliBox.setOutlineThickness(2);
+    cliBox.setOutlineColor(sf::Color(0, 255, 150));
+
+    sf::Text txtCLI("", font, 14);
+    txtCLI.setPosition(240, 135);
+    txtCLI.setFillColor(sf::Color(0, 255, 150));
+
+    vector<AppIcon> iconos;
+    string nombres[] = {"S.O. CLI", "Editor", "Word", "Excel", "PPT"};
+    for (int i = 0; i < 5; i++) iconos.push_back(AppIcon(nombres[i], 280 + (i * 110), font));
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) window.close();
+
+            if (!enBoot) {
+                if (event.type == sf::Event::TextEntered) {
+                    if (event.text.unicode == 13) { 
+                        if (inputUsuario == "Gojo" || inputUsuario == "Gege") {
+                            system("mkdir ExpansionDominio");
+                            logAccion = "Dominio creado: ExpansionDominio";
+                        } 
+                        else if (inputUsuario == "Sukuna") {
+                            logAccion = "Corte ejecutado. Todo rastro borrado.";
+                        }
+                        else if (inputUsuario == "Tengen") {
+                            logAccion = "Registros: Gojo/Gege, Sukuna, Mahito, Kenjaku.";
+                        }
+                        else if (inputUsuario == "clear") {
+                            bufferCLI = "";
+                            logAccion = "Consola limpia.";
+                        }
+                        else {
+                            logAccion = "Energia no reconocida.";
+                        }
+                        
+                        bufferCLI += "\nC:\\> " + inputUsuario + "\n  " + logAccion;
+                        inputUsuario = "";
+                    } 
+                    else if (event.text.unicode == 8) { 
+                        if (!inputUsuario.empty()) inputUsuario.pop_back();
+                    } 
+                    else if (event.text.unicode < 128) {
+                        inputUsuario += static_cast<char>(event.text.unicode);
+                    }
+                }
+
+                if (event.type == sf::Event::MouseButtonPressed) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    for (auto& icono : iconos) {
+                        if (icono.box.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
+                            if (icono.id == "Word") system("start winword");
+                            if (icono.id == "Excel") system("start excel");
+                            if (icono.id == "Editor") system("notepad");
+                            if (icono.id == "PPT") system("start powerpnt");
+                        }
+                    }
+                }
             }
         }
-        else if (comando == "Sukuna") {
-            string ruta;
-            cout << "Objetivo a desmantelar: ";
-            cin >> ruta;
-            system(("rmdir /s /q " + ruta).c_str());
-            cout << "  Corte ejecutado. Todo rastro borrado.";
-        }
-        else if (comando == "Mahito" || comando == "mh") {
-            string viejo, nuevo;
-            cout << "Forma actual: "; cin >> viejo;
-            cout << "Nueva forma: "; cin >> nuevo;
-            system(("rename " + viejo + " " + nuevo).c_str());
-            cout << "  Transfiguracion ociosa completada.";
-        }
-        else if (comando == "Tengen" || comando == "tng") {
-            cout << "\n--- REGISTROS DE TENGEN ---\n";
-            cout << "Gege/Gojo   -> Crear carpeta\n";
-            cout << "Kenjaku/kjk -> Moverse entre directorios\n";
-            cout << "Sukuna      -> Eliminar permanentemente\n";
-            cout << "Mahito/mh   -> Renombrar archivo/carpeta\n";
-            cout << "Tengen/tng  -> Mostrar estos registros\n";
-            Sleep(2000);
-        }
-        else if (comando == "exit") {
-            break;
-        }
-        else {
-            cout << "Energia no reconocida (Comando invalido).";
+
+        window.clear(sf::Color(40, 40, 45));
+
+        if (enBoot) {
+            float t = bootClock.getElapsedTime().asSeconds();
+            string carga = "=== JUJUTSU OS ===\n";
+            if (t < 1.0) carga += "Sincronizando energia maldita...";
+            else if (t < 2.0) carga += "Desplegando barrera...";
+            else if (t < 3.0) carga += "Accediendo al sistema Jujutsu...";
+            else if (t < 5.0) carga += obtenerAnalisisHardware();
+            else { 
+                enBoot = false; 
+                bufferCLI = "Bienvenido, hechicero.\n" + obtenerAnalisisHardware(); 
+            }
+            
+            txtCLI.setString(carga);
+            window.draw(txtLogo);
+            window.draw(cliBox);
+            window.draw(txtCLI);
+        } else {
+            window.draw(desktop);
+            window.draw(cliBox);
+            
+            txtCLI.setString(bufferCLI + "\nC:\\> " + inputUsuario + "_");
+            window.draw(txtCLI);
+
+            for (auto& icono : iconos) {
+                window.draw(icono.box);
+                window.draw(icono.label);
+            }
         }
 
-        Sleep(700);
-        currentY += 2;
-        if (currentY > 42) {
-            system("cls"); // Limpia pantalla si se llena
-            currentY = 2;
-        }
+        window.display();
     }
-
     return 0;
 }
